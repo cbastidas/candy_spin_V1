@@ -1,0 +1,1173 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>BETS10: Şansını Dene!</title>
+    <style>
+        /* CSS RESET & CUSTOM PROPERTIES */
+        :root {
+            --primary-color: #f7a61d;
+            --accent-color: #e53935;
+            --text-color: #ffffff;
+            --font-family: 'Arial', sans-serif;
+            
+            /* Sizing and positioning variables */
+            --stage-padding-top: 5vh;
+            --header-font-size-mobile: 5vw;
+            --wheel-area-size-mobile: 100vw;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            font-family: var(--font-family);
+            background: #2c0a4d;
+        }
+        
+        /* CONTAINER & BACKGROUND */
+        #container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-image: url('assets/bg.png');
+        }
+        
+        /* HEADER ASSET */
+        #header-text {
+            position: absolute;
+            top: 5vh;
+            width: 80vw;
+            max-width: 600px;
+            height: 15vw; /* Adjust based on asset's aspect ratio */
+            max-height: 100px;
+            z-index: 999;
+            background-image: url('assets/header.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            animation: fadeIn 1s ease-in-out;
+            pointer-events: none;
+        }
+
+        /* WHEEL & SPIN AREA - ALWAYS CENTERED */
+        #wheel-area {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: var(--wheel-area-size-mobile);
+            height: var(--wheel-area-size-mobile);
+            max-width: 500px;
+            max-height: 500px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 5;
+        }
+
+        /* WHEEL FRAME */
+        #wheel-frame {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            z-index: 4;
+            background-image: url('assets/wheel-frame.png');
+        }
+
+        /* WHEEL */
+        #wheel {
+            width: 100%;
+            height: 100%;
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            transition: transform 0s ease-out;
+            will-change: transform;
+            background-image: url('assets/wheel.png');
+        }
+
+        /* POINTER */
+        #pointer {
+            position: absolute;
+            top: -5%;
+            width: 20%;
+            height: 20%;
+            z-index: 20;
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            transform-origin: bottom center;
+            animation: pointerIdle 1s infinite ease-in-out;
+            background-image: url('assets/pointer.png');
+        }
+
+        @keyframes pointerIdle {
+            0%, 100% { transform: translateY(0) rotate(0); }
+            50% { transform: translateY(-3%) rotate(2deg); }
+        }
+
+        .pointer-shake {
+            animation: pointerShake 0.1s infinite alternate;
+        }
+
+        @keyframes pointerShake {
+            0% { transform: rotate(-2deg); }
+            100% { transform: rotate(2deg); }
+        }
+
+        /* SPIN BUTTON */
+        #spin-button {
+            position: absolute;
+            width: 25%;
+            height: 25%;
+            z-index: 30;
+            cursor: pointer;
+            border-radius: 50%;
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            animation: pulse 1s infinite;
+            background-image: url('assets/spin-button.png');
+        }
+
+        #spin-button:active {
+            transform: scale(0.95);
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        /* POPUP */
+        #popup-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+
+        #popup {
+            background-color: var(--text-color);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            max-width: 80%;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            animation: fadeIn 0.5s ease-in-out;
+            background-image: url('assets/popup-bg.png');
+            background-size: cover;
+            background-position: center;
+            color: black;
+            position: relative;
+        }
+
+        #popup h3 {
+            font-size: 1.5em;
+            margin-top: 0;
+            color: #2c0a4d;
+        }
+        
+        #popup p {
+            font-size: 1em;
+            color: #555;
+        }
+
+        #popup a.cta-button {
+            display: block;
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: var(--accent-color);
+            color: var(--text-color);
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+        
+        #popup a.cta-button:hover {
+            background-color: #c62828;
+        }
+
+        /* LAYOUT ELEMENTS - CHARACTER & DECORATIONS */
+        .decoration-element {
+            position: absolute;
+            background-size: contain;
+            background-repeat: no-repeat;
+            z-index: 1;
+            pointer-events: none;
+            animation-duration: 3s;
+            animation-iteration-count: infinite;
+            animation-timing-function: ease-in-out;
+            animation-direction: alternate;
+        }
+        
+        /* Mobile decoration placement */
+        #character {
+            position: absolute;
+            width: 60%;
+            height: auto;
+            bottom: 0;
+            left: 0;
+            background-image: url('assets/sweet-character.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+            z-index: 101;
+        }
+
+        #decoration-1 { /* Heart */
+            width: 15vw; height: 15vw; top: 5vh; left: 5vw;
+            background-image: url('assets/red-heart.png');
+            animation-name: floatUpDown;
+        }
+
+        #decoration-2 { /* Grapes */
+            width: 20vw; height: 20vw; top: 5vh; right: 5vw;
+            background-image: url('assets/purple-grapes.png');
+            animation-name: floatUpDown;
+        }
+        
+        #decoration-3 { /* Swirl Candy */
+            width: 60vw; height: 60vw; bottom: 5vh; right: -5vw;
+            background-image: url('assets/swirl-candy.png');
+        }
+
+        #decoration-4 { /* Banana */
+            width: 15vw; height: 15vw; bottom: 25vh; right: 3vw;
+            background-image: url('assets/banana.png');
+        }
+        
+        #decoration-5 { /* Purple Diamond */
+            width: 25vw; height: 25vw; bottom: 5vh; right: 3vw;
+            background-image: url('assets/purple-diamond.png');
+        }
+        
+        #decoration-6 { /* Green Diamond */
+            width: 25vw; height: 25vw; bottom: 5vh; left: 3vw;
+            background-image: url('assets/green-diamond.png');
+        }
+
+        #decoration-7 { /* Purple Peach */
+            width: 25vw; height: 25vw; bottom: 5vh; left: 3vw;
+            background-image: url('assets/purple-peach.png');
+        }
+
+        #decoration-8 { /* Candy Ball */
+            width: 25vw; height: 25vw; bottom: 5vh; left: 3vw;
+            background-image: url('assets/candy-ball.png');
+        }
+
+        /* CONFETTI/CUSTOM ANIMATION */
+        .confetti-particle {
+            position: absolute;
+            background-size: contain;
+            background-repeat: no-repeat;
+            opacity: 0;
+            animation: confetti-twinkle 2s ease-out forwards;
+            /*animation-fill-mode: forwards;*/
+            pointer-events: none;
+            z-index: 99;
+            transform-origin: center center;
+        }
+
+        @keyframes confetti-burst {
+            0% { transform: scale(0) translateY(-100vh) rotate(0deg); opacity: 1; }
+            50% { transform: scale(1) rotate(180deg); opacity: 1; }
+            100% { transform: scale(0.5) translateY(100vh) rotate(720deg); opacity: 0; }
+        }
+
+        @keyframes floatUpDown {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-15px); }
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes confetti-twinkle {
+        0% {
+            transform: translate(-50%, -50%) scale(0) rotate(0deg);
+            opacity: 0;
+        }
+        20% {
+            transform: translate(-50%, -50%) scale(1) rotate(90deg);
+            opacity: 1;
+        }
+        80% {
+            transform: translate(-50%, -50%) scale(1) rotate(270deg);
+            opacity: 1;
+        }
+        100% {
+            transform: translate(-50%, -50%) scale(0) rotate(360deg);
+            opacity: 0;
+        }
+        }
+
+         /* MEDIA QUERIES Surface Pro 912 x 1368 */
+        @media (min-width: 912px) and (max-width: 1023px) {
+            #character {
+                position: absolute;
+                width: 90%;
+                height: 470px;
+                bottom: 10;
+                right: 10px;
+                z-index: 1000;
+            }
+
+            #wheel-area {
+                position: absolute;
+                max-width: 700px;
+                max-height: 700px;
+                width: 600px;
+                height: 600px;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                z-index: 5;
+            }
+
+            #header-text {
+            position: absolute;
+            top: 5vh;
+            width: 180vw;
+            max-width: 700px;
+            height: 85vw; /* Adjust based on asset's aspect ratio */
+            max-height: 180px;
+            z-index: 999;
+            background-image: url('assets/header-2.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            animation: fadeIn 1s ease-in-out;
+            pointer-events: none;
+        }
+
+         /* Grapes */
+            #decoration-2 {
+                width: 150px; height: 150px; top: 500px; right: 20px;
+            }
+
+             /* Swirl Candy */
+            #decoration-3 {
+                width: 350px; height: 350px; bottom: -70px; right: -100px;
+            }
+
+            /* Banana */
+            #decoration-4 {
+                width: 250px; height: 250px; bottom: -70px; right: 40px;
+            }
+
+            /* Green Diamond */
+            #decoration-6 {
+                width: 150px; height: 150px; bottom: 770px; left: -70px;
+            }
+
+            /* Candy Ball */
+            #decoration-8 {
+                width: 300px; height: 300px; bottom: -130px; left: 200px;
+            }
+
+            /*Purple Diamond | Peach*/
+            #decoration-5, #decoration-7 {
+                display: none;
+            }
+
+        }
+
+         /* MEDIA QUERIES iPad Mini 820 x 911 */
+        @media (min-width: 820px) and (max-width: 911px) {
+            #character {
+                position: absolute;
+                width: 90%;
+                height: 470px;
+                bottom: 10;
+                right: 10px;
+                z-index: 1000;
+            }
+
+            #wheel-area {
+                position: absolute;
+                max-width: 800px;
+                max-height: 800px;
+                width: 500px;
+                height: 500px;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                z-index: 5;
+            }
+
+            #decoration-2 {
+                width: 150px; height: 150px; top: 180px; right: 100px;
+            }
+
+            #decoration-3 {
+               width: 400px; height: 400px; bottom: -110px; right: -120px; z-index: 99;
+            }
+
+            #decoration-4 {
+               width: 250px; height: 250px; bottom: -80px; right: 50px; z-index: 100; 
+            }
+
+             #decoration-6 {
+                width: 150px; height: 150px; bottom: 780px; left: -70px; z-index: 98;
+            }
+
+            #decoration-1 {
+                width: 120px; height: 120px; top: 210px; left: 300px;
+            }
+
+             #decoration-8 {
+                width: 270px; height: 270px; bottom: -40px; left: -50px;
+            }
+        }
+
+         /* MEDIA QUERIES FOR Mobile LAYOUT (400px to 539px) */
+        @media (min-width: 400px) and (max-width: 539px) {
+             #character {
+                position: absolute;
+                width: 70%;
+                height: 320px;
+                bottom: 0;
+                left: 120px;
+                z-index: 1000;
+            }
+
+              #decoration-1, #decoration-5, #decoration-7 {
+                display: none;
+            }
+
+             #decoration-2 {
+                width: 150px; height: 150px; top: 550px; right: -30px;
+            }
+
+             #decoration-3 {
+                width: 400px; height: 400px; bottom: -150px; left: -180px; z-index: 99;
+            }
+
+            #decoration-4 {
+                width: 150px; height: 150px; top: 220px; left: -30px; z-index: 100;
+            }
+
+            #decoration-6 {
+                width: 200px; height: 200px; bottom: -60px; left: 300px; z-index: 98;
+            }
+            
+
+            #header-text {
+            position: absolute;
+            top: 5vh;
+            width: 180vw;
+            max-width: 700px;
+            height: 85vw; /* Adjust based on asset's aspect ratio */
+            max-height: 180px;
+            z-index: 999;
+            background-image: url('assets/header-mb.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            animation: fadeIn 1s ease-in-out;
+            pointer-events: none;
+        }
+
+        }
+
+        /* MEDIA QUERIES FOR Mobile LAYOUT (390 to 399px) */
+        @media (min-width: 390px) and (max-width: 399px) {
+
+            #wheel-area {
+                position: absolute;
+                max-width: 350px;
+                max-height: 350px;
+                width: 80%;
+                height: 80%;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                z-index: 5;
+            }
+
+            #header-text {
+            position: absolute;
+            top: 5vh;
+            width: 180vw;
+            max-width: 600px;
+            height: 85vw; /* Adjust based on asset's aspect ratio */
+            max-height: 120px;
+            z-index: 999;
+            background-image: url('assets/header-mb.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            animation: fadeIn 1s ease-in-out;
+            pointer-events: none;
+            }
+
+            #character {
+                position: absolute;
+                max-width: 250px;
+                width: 60%;
+                max-height: 250px;
+                height: 40%;
+                bottom: 0;
+                left: 110px;
+                z-index: 1000;
+            }
+
+            /* Grapes */
+             #decoration-2 {
+                width: 80px; height: 80px; top: 550px; right: 10px;
+            }
+
+            /*Swirl Candy*/
+            #decoration-3 {
+                width: 150px; height: 150px; bottom: -80px; left: -20px; z-index: 99;
+            }
+
+            /*Banana*/
+            #decoration-4 {
+                width: 100px; height: 150px; top: 160px; left: -30px; z-index: 100;
+            }
+
+            /*Green Diamond*/
+            #decoration-6 {
+                width: 150px; height: 150px; bottom: -60px; left: 280px; z-index: 98;
+            }
+
+            /* Red Heart | Candy Ball | Peach | Purple Diamond*/
+             #decoration-1, #decoration-8, #decoration-7, #decoration-5 {
+                display: none;
+            }
+
+            #pointer {
+                top: 2%;
+            }
+        }
+
+        /* MEDIA QUERIES FOR Mobile LAYOUT (375 to 389px) */
+        @media (min-width: 375px) and (max-width: 389px) {
+
+            #wheel-area {
+                position: absolute;
+                max-width: 350px;
+                max-height: 350px;
+                width: 80%;
+                height: 80%;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                z-index: 5;
+            }
+
+            #header-text {
+            position: absolute;
+            top: 5vh;
+            width: 180vw;
+            max-width: 600px;
+            height: 85vw; /* Adjust based on asset's aspect ratio */
+            max-height: 120px;
+            z-index: 999;
+            background-image: url('assets/header-mb.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            animation: fadeIn 1s ease-in-out;
+            pointer-events: none;
+            }
+
+            #character {
+                position: absolute;
+                max-width: 200px;
+                width: 60%;
+                max-height: 200px;
+                height: 40%;
+                bottom: 0;
+                left: 110px;
+                z-index: 1000;
+            }
+
+            /* Grapes */
+             #decoration-2 {
+                width: 80px; height: 80px; top: 450px; right: 10px;
+            }
+
+            /*Swirl Candy*/
+            #decoration-3 {
+                width: 150px; height: 150px; bottom: -80px; left: -20px; z-index: 99;
+            }
+
+            /*Banana*/
+            #decoration-4 {
+                width: 100px; height: 150px; top: 160px; left: -30px; z-index: 100;
+            }
+
+            /*Green Diamond*/
+            #decoration-6 {
+                width: 150px; height: 150px; bottom: -60px; left: 280px; z-index: 98;
+            }
+
+            /* Red Heart | Candy Ball | Peach | Purple Diamond*/
+             #decoration-1, #decoration-8, #decoration-7, #decoration-5 {
+                display: none;
+            }
+
+            #pointer {
+                top: 2%;
+            }
+        }
+
+        /* MEDIA QUERIES FOR Mobile LAYOUT (250 to 374px) */
+        @media (min-width: 250px) and (max-width: 374px) {
+
+             #character {
+                position: absolute;
+                width: 70%;
+                height: 250px;
+                bottom: 0;
+                left: 120px;
+                z-index: 1000;
+            }
+
+              #decoration-1, #decoration-5, #decoration-7, #decoration-8 {
+                display: none;
+            }
+
+             #decoration-2 {
+                width: 120px; height: 120px; top: 450px; right: -30px;
+            }
+
+            #decoration-3 {
+                width: 300px; height: 300px; bottom: -150px; left: -180px; z-index: 99;
+            }
+
+            #decoration-4 {
+                width: 110px; height: 110px; top: 220px; left: -40px; z-index: 100;
+            }
+
+            #decoration-6 {
+                width: 150px; height: 150px; bottom: -60px; left: 280px; z-index: 98;
+            }
+            
+
+            #header-text {
+            position: absolute;
+            top: 5vh;
+            width: 180vw;
+            max-width: 700px;
+            height: 85vw; /* Adjust based on asset's aspect ratio */
+            max-height: 140px;
+            z-index: 999;
+            background-image: url('assets/header-mb.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            animation: fadeIn 1s ease-in-out;
+            pointer-events: none;
+        }
+
+        }
+
+        
+        /* MEDIA QUERIES FOR Mobile LAYOUT (540px to 767px) */
+        @media (min-width: 540px) and (max-width: 767px) {
+            #wheel-area {
+                position: absolute;
+                max-width: 350px;
+                max-height: 350px;
+                width: 600px;
+                height: 600px;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                z-index: 5;
+            }
+
+            #header-text {
+            position: absolute;
+            top: -15vh;
+            width: 180vw;
+            max-width: 500px;
+            height: 70vw; /* Adjust based on asset's aspect ratio */
+            max-height: 580px;
+            z-index: 999;
+            background-image: url('assets/header-2.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            animation: fadeIn 1s ease-in-out;
+            pointer-events: none;
+            }
+
+            #decoration-1, #decoration-5, #decoration-7 {
+                display: none;
+            }
+
+            #character {
+                position: absolute;
+                max-width: 400px;
+                width: 60%;
+                max-height: 300px;
+                height: 40%;
+                bottom: 0;
+                left: 0px;
+                z-index: 1000;
+            }
+
+             /*Grapes */
+            #decoration-2 {
+                width: 110px; height: 110px; top: 150px; right: 30px;
+            }
+
+            /*Swirl Candy*/
+            #decoration-3 {
+                width: 250px; height: 250px; bottom: -80px; right: -80px; z-index: 99;
+            }
+
+            /*Banana*/
+            #decoration-4 {
+                width: 150px; height: 150px; bottom: -40px; right: 30px; z-index: 100;
+            }
+
+             #decoration-6 {
+                width: 200px; height: 200px; bottom: -60px; left: 450px; z-index: 98;
+            }
+
+            /* Candy Ball */
+             #decoration-8 {
+                width: 170px; height: 170px; bottom: -70px; left: 100px;
+            }
+        }
+
+
+        /* MEDIA QUERIES FOR TABLET LAYOUT (768px to 819px) */
+        @media (min-width: 768px) and (max-width: 819px) {
+            #character {
+                position: absolute;
+                width: 60%;
+                height: 340px;
+                bottom: 0;
+                left: 80px;
+                z-index: 1000;
+            }
+
+            #decoration-1, #decoration-5, #decoration-7 {
+                display: none;
+            }
+
+            #decoration-2 {
+                width: 150px; height: 150px; top: 130px; right: 50px;
+            }
+
+            #decoration-3 {
+                width: 250px; height: 250px; bottom: -60px; right: -60px;
+            }
+            
+            #decoration-4 {
+                width: 150px; height: 150px; bottom: 0px; right: 80px; z-index: 100;
+            }
+
+             #decoration-6 {
+                width: 170px; height: 170px; top: 150px; left: -50px;
+            }
+
+            #decoration-8 {
+                width: 210px; height: 210px; bottom: -60px; left: -60px;
+            }
+
+           
+
+            #wheel-area {
+                position: absolute;
+                width: 550px;
+                height: 550px;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                z-index: 5;
+            }
+
+            #wheel {
+            width: 120%;
+            height: 120%;
+            }
+        }
+        /* MEDIA QUERIES FOR DESKTOP LAYOUT (1280px */
+        @media (min-width: 1280px) {
+            
+                #spin-button {
+                position: absolute;
+                width: 25%;
+                height: 25%;
+                z-index: 201;
+                cursor: pointer;
+                border-radius: 50%;
+                background-size: contain;
+                background-repeat: no-repeat;
+                background-position: center;
+                animation: pulse 1s infinite;
+                background-image: url('assets/spin-button.png');
+            }
+        }
+
+        /* MEDIA QUERIES FOR DESKTOP LAYOUT (1024px and up) */
+        @media (min-width: 1024px) {
+
+            #spin-button {
+                position: absolute;
+                width: 25%;
+                height: 25%;
+                z-index: 201;
+                cursor: pointer;
+                border-radius: 50%;
+                background-size: contain;
+                background-repeat: no-repeat;
+                background-position: center;
+                animation: pulse 1s infinite;
+                background-image: url('assets/spin-button.png');
+            }
+
+            #header-text {
+                position: absolute;
+                top: -18vh;
+                left: 50%;
+                width: 80vw;
+                max-width: 1280px;
+                height: 30vw; /* Adjust based on asset's aspect ratio */
+                max-height: 1280px;
+                transform: translateX(-50%);
+                font-size: 2.2em;
+                background-image: url('assets/header.png');
+
+            }
+
+            #wheel-area {
+                position: absolute;
+                max-width: 900px;
+                width: 70vw;
+                max-height: 900px;
+                height: 70vh;
+                top: 60%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                z-index: 5;
+            }
+
+            #pointer {
+                top: -5%;
+            }
+            
+            #character {
+                position: absolute;
+                width: 60%;
+                height: 400px;
+                bottom: 0;
+                left: 0;
+                z-index: 100;
+            }
+
+
+
+            /* Desktop decoration placements */
+            /* Red heart*/
+            #decoration-1 {
+                width: 200px; height: 200px; top: 50px; left: -40px;
+            }
+
+            /* Grapes */
+            #decoration-2 {
+                width: 150px; height: 150px; top: 500px; right: 60px;
+            }
+            
+            #decoration-3 {
+                width: 400px; height: 400px; bottom: -50px; right: -100px; z-index: 99;
+            }
+
+            #decoration-4 {
+                width: 250px; height: 250px; bottom: -80px; right: 50px; z-index: 100;
+            }
+            
+            #decoration-5, #decoration-7 { 
+                display: none;
+            }
+
+             /* Green Diamond */
+            #decoration-6 {
+                width: 200px; height: 200px; top: 400px; left: -60px; z-index: 98;
+            }
+
+             /* Candy Ball */
+             #decoration-8 {
+                width: 270px; height: 270px; bottom: -100px; left: 150px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="container">
+
+        <div id="header-text"></div>
+
+        <div id="character"></div>
+
+        <div id="wheel-area">
+            <div id="wheel-frame"></div>
+            <div id="wheel"></div>
+            <div id="pointer"></div>
+            <div id="spin-button"></div>
+        </div>
+
+        <div class="decoration-element" id="decoration-1"></div>
+        <div class="decoration-element" id="decoration-2"></div>
+        <div class="decoration-element" id="decoration-3"></div>
+        <div class="decoration-element" id="decoration-4"></div>
+        <div class="decoration-element" id="decoration-5"></div>
+        <div class="decoration-element" id="decoration-6"></div>
+        <div class="decoration-element" id="decoration-7"></div>
+        <div class="decoration-element" id="decoration-8"></div>
+    </div>
+
+    <div id="popup-overlay">
+        <div id="popup">
+            <h3 id="popup-title">Tebrikler!</h3>
+            <p id="popup-message">Harika bir ödül kazandınız!</p>
+            <a href="#" class="cta-button" id="cta-button">Hemen Oyna!</a>
+        </div>
+    </div>
+
+    <script>
+        // --- CONFIGURATION ---
+        const config = {
+            ctaLink: 'https://example.com/register',
+            wheelSegments: 8,
+            assets: {
+                background: 'assets/bg.png',
+                wheel: 'assets/wheel.png',
+                wheelFrame: 'assets/wheel-frame.png',
+                pointer: 'assets/pointer.png',
+                spinButton: 'assets/spin-button.png',
+                character: 'assets/sweet-character.png',
+                confetti: [
+                    'assets/Coins-150x150.png',
+                    'assets/Coins-150x150-1.png',
+                    'assets/Coins-150x150-2.png',
+                    'assets/Coins-150x150-3.png',
+                    'assets/Confetti-150x150.png',
+                    'assets/Confetti-150x150-1.png',
+                    'assets/Confetti-150x150-2.png',
+                    'assets/Coins-Confetti-.png',
+                ],
+                decorations: {
+                    decoration1: 'assets/red-heart.png',
+                    decoration2: 'assets/purple-grapes.png',
+                    decoration3: 'assets/swirl-candy.png',
+                    decoration4: 'assets/banana.png',
+                    decoration5: 'assets/purple-diamond.png',
+                    decoration6: 'assets/green-diamond.png',
+                    decoration7: 'assets/purple-peach.png',
+                    decoration8: 'assets/candy-ball.png',
+                    sparkle: 'assets/sparkle.png'
+                },
+                popupBg: 'assets/popup-bg.png',
+                sounds: {
+                    spinLoop: 'assets/spin-loop.mp3',
+                    tick: 'assets/tick.mp3',
+                    spinStart: 'assets/spin-start.mp3',
+                    spinSlow: 'assets/spin-slow.mp3',
+                    win: 'assets/win.mp3',
+                }
+            },
+            prizes: [
+                { name: '100% Bonus', text: '100% Bonus!', message: 'Tebrikler! 100% bonus kazandınız!', ctaText: 'Bonusu Al' },
+                { name: '50 FS', text: '50 Free Spin', message: 'Tebrikler! 50 Free Spin kazandınız!', ctaText: 'Free Spinleri Al' },
+                { name: '10 FS', text: '10 Free Spin', message: 'Tebrikler! 10 Free Spin kazandınız!', ctaText: 'Free Spinleri Al' },
+                { name: '200% Bonus', text: '200% Bonus!', message: 'Tebrikler! 200% bonus kazandınız!', ctaText: 'Bonusu Al' },
+                { name: 'Boş', text: 'Boş Çeviri', message: 'Üzgünüz, bir dahaki sefere daha çok şans dileriz.', ctaText: 'Tekrar Dene' },
+                { name: '100 TL', text: '100 TL', message: 'Tebrikler! 100 TL kazandınız!', ctaText: 'Ödülü Al' },
+                { name: 'Boş', text: 'Boş Çeviri', message: 'Üzgünüz, bir dahaki sefere daha çok şans dileriz.', ctaText: 'Tekrar Dene' },
+                { name: '50 TL', text: '50 TL', message: 'Tebrikler! 50 TL kazandınız!', ctaText: 'Ödülü Al' },
+            ]
+            
+        };
+
+        const wheel = document.getElementById('wheel');
+        const spinButton = document.getElementById('spin-button');
+        const pointer = document.getElementById('pointer');
+        const popupOverlay = document.getElementById('popup-overlay');
+        const popupTitle = document.getElementById('popup-title');
+        const popupMessage = document.getElementById('popup-message');
+        const ctaButton = document.getElementById('cta-button');
+        const container = document.getElementById('container');
+        
+        let isSpinning = false;
+        let lastSegmentIndex = -1;
+        let audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        let audioBuffers = {};
+        const audioNodes = {};
+
+        async function loadAudio(url, name) {
+            try {
+                const response = await fetch(url);
+                const arrayBuffer = await response.arrayBuffer();
+                audioBuffers[name] = await audioContext.decodeAudioData(arrayBuffer);
+            } catch (error) {
+                console.error(`Error loading audio ${name}:`, error);
+            }
+        }
+
+        function playAudio(name, loop = false) {
+            if (!audioBuffers[name]) {
+                console.warn(`Audio ${name} not loaded.`);
+                return null;
+            }
+            const source = audioContext.createBufferSource();
+            source.buffer = audioBuffers[name];
+            source.connect(audioContext.destination);
+            source.loop = loop;
+            source.start(0);
+            return source;
+        }
+
+        function stopAudio(sourceNode) {
+            if (sourceNode) {
+                sourceNode.stop();
+                sourceNode.disconnect();
+            }
+        }
+        
+        function init() {
+            for (const name in config.assets.sounds) {
+                loadAudio(config.assets.sounds[name], name);
+            }
+            spinButton.addEventListener('click', spinWheel);
+            startWheelLoop();
+            
+            createConfettiRain()
+        }
+
+        function startWheelLoop() {
+            wheel.style.transition = 'transform 20s linear infinite';
+            wheel.style.transform = `rotate(3600deg)`;
+            audioNodes.spinLoop = playAudio('spinLoop', true);
+            pointer.classList.add('pointer-shake');
+        }
+
+        function spinWheel() {
+            if (isSpinning) return;
+            isSpinning = true;
+            spinButton.style.animation = 'none';
+            pointer.classList.remove('pointer-shake');
+            stopAudio(audioNodes.spinLoop);
+            
+            audioNodes.spinStart = playAudio('spinStart');
+
+            const spinDuration = 5000;
+            const targetSegment = Math.floor(Math.random() * config.wheelSegments);
+            const degreesPerSegment = 360 / config.wheelSegments;
+            const extraSpins = 5 * 360;
+            const totalDegrees = extraSpins + (360 - targetSegment * degreesPerSegment) - (degreesPerSegment / 2);
+            
+            wheel.style.transition = `transform ${spinDuration / 1000}s cubic-bezier(0.25, 0.1, 0.25, 1)`;
+            wheel.style.transform = `rotate(${totalDegrees}deg)`;
+
+            const wheelObserver = new MutationObserver(() => {
+                const style = window.getComputedStyle(wheel);
+                const transform = style.getPropertyValue('transform');
+                const matrix = new DOMMatrix(transform);
+                const currentRotation = Math.round(Math.atan2(matrix.b, matrix.a) * (180 / Math.PI));
+                const normalizedRotation = (360 + currentRotation) % 360;
+                
+                const segmentIndex = Math.floor(normalizedRotation / degreesPerSegment);
+                if (segmentIndex !== lastSegmentIndex) {
+                    playAudio('tick');
+                    lastSegmentIndex = segmentIndex;
+                }
+            });
+
+            wheelObserver.observe(wheel, { attributes: true, attributeFilter: ['style'] });
+            
+            setTimeout(() => {
+                wheelObserver.disconnect();
+                isSpinning = false;
+                showResult(targetSegment);
+                
+                const finalRotation = totalDegrees % 360;
+                wheel.style.transition = 'none';
+                wheel.style.transform = `rotate(${finalRotation}deg)`;
+                spinButton.style.animation = 'pulse 1s infinite';
+            }, spinDuration + 100);
+        }
+
+        function showResult(segmentIndex) {
+            playAudio('win');
+            pointer.classList.add('pointer-shake');
+            
+            const prize = config.prizes[segmentIndex];
+            
+            createConfettiRain()
+            
+            popupTitle.textContent = prize.text;
+            popupMessage.textContent = prize.message;
+            ctaButton.href = config.ctaLink;
+            ctaButton.textContent = prize.ctaText;
+            
+            popupOverlay.style.display = 'flex';
+        }
+
+            function createConfettiRain() {
+             const confettiAssets = config.assets.confetti;         
+                setInterval(() => {
+                    // Pick a random asset from the confetti array
+                    const randomAsset = confettiAssets[Math.floor(Math.random() * confettiAssets.length)];
+                
+                    const confetti = document.createElement('div');
+                    confetti.classList.add('confetti-particle');
+                
+                    confetti.style.backgroundImage = `url('${randomAsset}')`;
+                
+                    const size = Math.random() * 40 + 20; // Randomize size for more variety
+                    const x = Math.random() * window.innerWidth;
+                    const y = Math.random() * window.innerHeight;
+                    const duration = Math.random() * 1.5 + 2; // Randomize duration
+                
+                    confetti.style.width = `${size}px`;
+                    confetti.style.height = `${size}px`;
+                    confetti.style.left = `${x}px`;
+                    confetti.style.top = `${y}px`;
+                    confetti.style.animation = `confetti-twinkle ${duration}s ease-out forwards`;
+                
+                    container.appendChild(confetti);
+                
+                    // Remove the element after its animation is complete
+                    setTimeout(() => confetti.remove(), duration * 1000);
+                
+                }, 500); // Create a new particle every 500ms
+            }
+                
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
